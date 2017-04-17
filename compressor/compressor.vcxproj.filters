@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="compressorcontroller.cpp">
+      <Filter>do</Filter>
+    </ClCompile>
+    <ClCompile Include="compressorprocessor.cpp">
+      <Filter>do</Filter>
+    </ClCompile>
+    <ClCompile Include="wave_view.cpp">
+      <Filter>view</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\vstgui4\vstgui\vstgui_uidescription.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\vstgui4\vstgui\plugin-bindings\vst3editor.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="factory.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\VST_SDK\VST3_SDK\public.sdk\source\main\dllmain.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="view">
+      <UniqueIdentifier>{54cc8276-637a-4fee-9521-872626201c8d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="main">
+      <UniqueIdentifier>{45D6F28F-B823-31CC-ACF9-BA3167E37A41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="do">
+      <UniqueIdentifier>{72A8C05A-7455-3E6C-95DB-117837C31707}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="version.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="compressorids.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="wave_view.h">
+      <Filter>view</Filter>
+    </ClInclude>
+    <ClInclude Include="compressorprocessor.h">
+      <Filter>do</Filter>
+    </ClInclude>
+    <ClInclude Include="compressorcontroller.h">
+      <Filter>do</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resource.rc">
+      <Filter>main</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
