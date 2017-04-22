@@ -22,6 +22,12 @@
     <ClCompile Include="E:\VST_SDK\VST3_SDK\public.sdk\source\main\dllmain.cpp">
       <Filter>main</Filter>
     </ClCompile>
+    <ClCompile Include="ViewController.cpp">
+      <Filter>do</Filter>
+    </ClCompile>
+    <ClCompile Include="utils.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="view">
@@ -51,6 +57,9 @@
       <Filter>do</Filter>
     </ClInclude>
     <ClInclude Include="compressorcontroller.h">
+      <Filter>do</Filter>
+    </ClInclude>
+    <ClInclude Include="ViewController.h">
       <Filter>do</Filter>
     </ClInclude>
   </ItemGroup>

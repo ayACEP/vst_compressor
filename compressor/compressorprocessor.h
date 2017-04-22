@@ -46,7 +46,12 @@ class CompressorProcessor : public AudioEffect
 {
 public:
 	CompressorProcessor ();
-	
+
+	static FUnknown* createInstance(void*)
+	{
+		return (IAudioProcessor*)new CompressorProcessor();
+	}
+
 	tresult PLUGIN_API initialize (FUnknown* context) SMTG_OVERRIDE;
 	tresult PLUGIN_API setBusArrangements (SpeakerArrangement* inputs, int32 numIns, SpeakerArrangement* outputs, int32 numOuts) SMTG_OVERRIDE;
 
@@ -57,10 +62,10 @@ public:
 	tresult PLUGIN_API setState (IBStream* state) SMTG_OVERRIDE;
 	tresult PLUGIN_API getState (IBStream* state) SMTG_OVERRIDE;
 
-	static FUnknown* createInstance (void*) { return (IAudioProcessor*)new CompressorProcessor (); }
-
 protected:
 	ParamValue mThreshold;
+	ParamValue mRatio;
+	ParamValue mGain;
 	bool mBypass;
 };
 

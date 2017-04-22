@@ -351,6 +351,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="compressorprocessor.cpp" />
     <ClCompile Include="E:\VST_SDK\VST3_SDK\public.sdk\source\main\dllmain.cpp" />
     <ClCompile Include="factory.cpp" />
+    <ClCompile Include="utils.cpp" />
+    <ClCompile Include="ViewController.cpp" />
     <ClCompile Include="wave_view.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -373,6 +375,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="compressorprocessor.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="version.h" />
+    <ClInclude Include="ViewController.h" />
     <ClInclude Include="wave_view.h" />
   </ItemGroup>
   <ItemGroup>

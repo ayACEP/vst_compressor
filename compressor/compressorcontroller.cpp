@@ -35,9 +35,10 @@
 //-----------------------------------------------------------------------------
 
 #include "compressorcontroller.h"
-#include "compressorids.h"
 #include "pluginterfaces/base/ustring.h"
 #include "pluginterfaces/base/ibstream.h"
+#include "compressorids.h"
+#include "ViewController.h"
 #include "utils.h"
 
 #if TARGET_OS_IPHONE
@@ -54,9 +55,12 @@ tresult PLUGIN_API CompressorController::initialize (FUnknown* context)
 	tresult result = EditController::initialize (context);
 	if (result == kResultTrue)
 	{
-		parameters.addParameter (STR16 ("Bypass"), 0, 1, 0, ParameterInfo::kCanAutomate|ParameterInfo::kIsBypass, kBypassId);
-
-		parameters.addParameter (STR16 ("Threshold"), STR16 ("db"), 0, 1, ParameterInfo::kCanAutomate, kThresholdId);
+		parameters.addParameter(STR16("Bypass"), 0, 1, 0, ParameterInfo::kCanAutomate | ParameterInfo::kIsBypass, ParamTag::kBypassId);
+		parameters.addParameter(STR16("Threshold"), STR16("db"), 0, 1, ParameterInfo::kCanAutomate, ParamTag::kThresholdId);
+		parameters.addParameter(STR16("Ratio"), STR16(""), 0, 1, ParameterInfo::kCanAutomate, ParamTag::kRatioId);
+		parameters.addParameter(STR16("Gain"), STR16("db"), 0, 1, ParameterInfo::kCanAutomate, ParamTag::kGainId);
+		parameters.addParameter(STR16("Attack"), STR16("ms"), 0, 1, ParameterInfo::kCanAutomate, ParamTag::kAttackId);
+		parameters.addParameter(STR16("Release"), STR16("ms"), 0, 1, ParameterInfo::kCanAutomate, ParamTag::kReleaseId);
 	}
 	return kResultTrue;
 }
@@ -83,7 +87,7 @@ tresult PLUGIN_API CompressorController::setComponentState (IBStream* state)
 	if (state)
 	{
 		ParamValue savedThreshold = 0.f;
-		if (state->read (&savedThreshold, sizeof (savedThreshold)) != kResultTrue)
+		if (state->read (&savedThreshold, sizeof (savedThreshold)) == kResultFalse)
 		{
 			return kResultFalse;
 		}
@@ -91,7 +95,8 @@ tresult PLUGIN_API CompressorController::setComponentState (IBStream* state)
 #if BYTEORDER == kBigEndian
 		SWAP_32 (savedDelay)
 #endif
-		setParamNormalized (kThresholdId, savedThreshold);
+		LOG("threshold %f\n", savedThreshold);
+		setParamNormalized (ParamTag::kThresholdId, savedThreshold);
 
 		// read the bypass
 		int32 bypassState;
@@ -100,6 +105,7 @@ tresult PLUGIN_API CompressorController::setComponentState (IBStream* state)
 #if BYTEORDER == kBigEndian
 			SWAP_32 (bypassState)
 #endif
+			LOG("bypass %d\n", bypassState);
 			setParamNormalized (kBypassId, bypassState ? 1 : 0);
 		}
 	}
@@ -119,8 +125,43 @@ tresult PLUGIN_API CompressorController::getState(IBStream* state) {
 	return kResultFalse;
 }
 
+CView * CompressorController::verifyView(CView * view, const UIAttributes & attributes, const IUIDescription * description, VST3Editor * editor)
+{
+	LOG("CompressorController::verifyView\n");
+	CControl* control = dynamic_cast<CControl*>(view);
+	if (control)
+	{
+		setShowUnits(control);
+	}
+	return view;
+}
+
+void CompressorController::setShowUnits(CControl* control)
+{
+	CTextEdit* textEdit = dynamic_cast<CTextEdit*>(control);
+	if (textEdit)
+	{
+		TChar* units = getParameterObject(control->getTag())->getInfo().units;
+		textEdit->setValueToStringFunction([units](float value, char* utf8String, CParamDisplay* display)
+		{
+			sprintf(utf8String, "%.4f %ws\0", value, units);
+			return true;
+		});
+		textEdit->setStringToValueFunction([&](UTF8StringPtr txt, float &result, CTextEdit* textEdit)
+		{
+			sscanf(txt, "%f", &result);
+			return true;
+		});
+	}
+}
+
 IController * CompressorController::createSubController(UTF8StringPtr name, const IUIDescription * description, VST3Editor * editor)
 {
+	LOG("CompressorController::createSubController\n");
+	if (UTF8StringView(name) == "ViewController")
+	{
+		return new ViewController(this);
+	}
 	return nullptr;
 }
 

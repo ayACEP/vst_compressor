@@ -35,13 +35,13 @@
 //-----------------------------------------------------------------------------
 
 #include "compressorprocessor.h"
-#include "compressorids.h"
+#include <algorithm>
+#include <cstdlib>
 #include "pluginterfaces/base/ustring.h"
 #include "pluginterfaces/base/ibstream.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
+#include "compressorids.h"
 #include "utils.h"
-#include <algorithm>
-#include <cstdlib>
 
 namespace Steinberg {
 namespace Vst {
@@ -114,7 +114,7 @@ tresult PLUGIN_API CompressorProcessor::setActive (TBool state)
 	//}
 	return AudioEffect::setActive (state);
 }
-
+int i = 0;
 //-----------------------------------------------------------------------------
 tresult PLUGIN_API CompressorProcessor::process (ProcessData& data)
 {
@@ -132,7 +132,7 @@ tresult PLUGIN_API CompressorProcessor::process (ProcessData& data)
 				switch (paramQueue->getParameterId ())
 				{
 					case kThresholdId:
-						if (paramQueue->getPoint (numPoints - 1, sampleOffset, value) == kResultTrue)
+						if (paramQueue->getPoint(numPoints - 1, sampleOffset, value) == kResultTrue)
 							mThreshold = value;
 						break;
 					case kBypassId:
@@ -219,6 +219,8 @@ tresult PLUGIN_API CompressorProcessor::setState (IBStream* state)
 	SWAP_32 (savedBypass)
 #endif
 
+	LOG("threshold: %f\n", savedThreshold);
+	LOG("bypass: %d\n", savedBypass);
 	mThreshold = savedThreshold;
 	mBypass = savedBypass > 0;
 
@@ -231,14 +233,16 @@ tresult PLUGIN_API CompressorProcessor::getState (IBStream* state)
 	LOG("CompressorProcessor::getState\n");
 	// here we need to save the model
 
-	float toSaveThreshold = mThreshold;
+	ParamValue toSaveThreshold = mThreshold;
 	int32 toSaveBypass = mBypass ? 1 : 0;
 
 #if BYTEORDER == kBigEndian
-	SWAP_32 (toSaveThreshold)
-	SWAP_32 (toSaveBypass)
+	SWAP_32(toSaveThreshold)
+	SWAP_32(toSaveBypass)
 #endif
 
+	LOG("threshold: %f\n", toSaveThreshold);
+	LOG("bypass: %d\n", toSaveBypass);
 	state->write (&toSaveThreshold, sizeof (ParamValue));
 	state->write (&toSaveBypass, sizeof (int32));
 

@@ -54,21 +54,28 @@ public:
 	// create function required for Plug-in factory,
 	// it will be called to create new instances of this controller
 	//------------------------------------------------------------------------
-	static FUnknown* createInstance (void*) { return (IEditController*)new CompressorController (); }
+	static FUnknown* createInstance (void*)
+	{
+		return (IEditController*)new CompressorController();
+	}
 
 	//---from IPluginBase--------
 	tresult PLUGIN_API initialize (FUnknown* context) SMTG_OVERRIDE;
-	
+
 	//---from EditController-----
 	IPlugView* PLUGIN_API createView (FIDString name) SMTG_OVERRIDE;
 	tresult PLUGIN_API setComponentState (IBStream* state) SMTG_OVERRIDE;
 	tresult PLUGIN_API setState(IBStream* state) SMTG_OVERRIDE;
 	tresult PLUGIN_API getState(IBStream* state) SMTG_OVERRIDE;
 
-	IController* createSubController(UTF8StringPtr name, const IUIDescription* description, VST3Editor* editor);
+	//-----from VST3EditorDelegate-----//
+	CView* verifyView(CView* view, const UIAttributes& attributes, const IUIDescription* description, VST3Editor* editor) override;
+	IController* createSubController(UTF8StringPtr name, const IUIDescription* description, VST3Editor* editor) override;
+
+private:
+	void setShowUnits(CControl * control);
 };
 
 //------------------------------------------------------------------------
 } // namespace Vst
 } // namespace Steinberg
-

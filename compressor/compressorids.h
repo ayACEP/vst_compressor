@@ -42,9 +42,13 @@ namespace Steinberg {
 namespace Vst {
 
 // parameter tags
-enum {
-	kThresholdId = 100,
-	kBypassId = 101
+enum ParamTag {
+	kBypassId = 0,
+	kThresholdId,
+	kRatioId,
+	kAttackId,
+	kReleaseId,
+	kGainId
 };
 
 // unique class ids
