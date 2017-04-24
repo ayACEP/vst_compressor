@@ -63,10 +63,12 @@ public:
 	tresult PLUGIN_API getState (IBStream* state) SMTG_OVERRIDE;
 
 protected:
+	bool mBypass;
 	ParamValue mThreshold;
 	ParamValue mRatio;
 	ParamValue mGain;
-	bool mBypass;
+	ParamValue mAttack;
+	ParamValue mRelease;
 };
 
 //------------------------------------------------------------------------

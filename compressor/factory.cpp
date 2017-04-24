@@ -1,9 +1,9 @@
 #include "public.sdk\source\main\pluginfactoryvst3.h"
 #include "compressorcontroller.h"
 #include "compressorprocessor.h"
-#include "compressorids.h"
 #include "version.h"
-#include <Windows.h>
+#include "ids.h"
+#include <consoleapi.h>
 
 #define stringPluginName "Compressor"
 
@@ -12,7 +12,7 @@ BEGIN_FACTORY("ayACEP",
 	"mailto:srx1982@gmail.com",
 	PFactoryInfo::kNoFlags)
 
-	DEF_CLASS2(INLINE_UID_FROM_FUID(Steinberg::Vst::CompressorProcessorUID),
+	DEF_CLASS2(INLINE_UID_FROM_FUID(CompressorProcessorUID),
 		PClassInfo::kManyInstances,
 		kVstAudioEffectClass,
 		stringPluginName,
@@ -22,7 +22,7 @@ BEGIN_FACTORY("ayACEP",
 		kVstVersionString,
 		Steinberg::Vst::CompressorProcessor::createInstance)
 
-	DEF_CLASS2(INLINE_UID_FROM_FUID(Steinberg::Vst::CompressorControllerUID),
+	DEF_CLASS2(INLINE_UID_FROM_FUID(CompressorControllerUID),
 		PClassInfo::kManyInstances,
 		kVstComponentControllerClass,
 		stringPluginName "Controller",	// controller name (could be the same than component name)

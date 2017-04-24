@@ -7,9 +7,6 @@
     <ClCompile Include="compressorprocessor.cpp">
       <Filter>do</Filter>
     </ClCompile>
-    <ClCompile Include="wave_view.cpp">
-      <Filter>view</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\..\..\vstgui4\vstgui\vstgui_uidescription.cpp">
       <Filter>main</Filter>
     </ClCompile>
@@ -25,8 +22,14 @@
     <ClCompile Include="ViewController.cpp">
       <Filter>do</Filter>
     </ClCompile>
+    <ClCompile Include="WaveView.cpp">
+      <Filter>view</Filter>
+    </ClCompile>
     <ClCompile Include="utils.cpp">
-      <Filter>main</Filter>
+      <Filter>do</Filter>
+    </ClCompile>
+    <ClCompile Include="RangeMapping.cpp">
+      <Filter>do</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -39,19 +42,13 @@
     <Filter Include="do">
       <UniqueIdentifier>{72A8C05A-7455-3E6C-95DB-117837C31707}</UniqueIdentifier>
     </Filter>
+    <Filter Include="res">
+      <UniqueIdentifier>{d1ae2eb0-6120-420f-9446-79232aec09f7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="version.h">
       <Filter>main</Filter>
-    </ClInclude>
-    <ClInclude Include="compressorids.h">
-      <Filter>main</Filter>
-    </ClInclude>
-    <ClInclude Include="utils.h">
-      <Filter>main</Filter>
-    </ClInclude>
-    <ClInclude Include="wave_view.h">
-      <Filter>view</Filter>
     </ClInclude>
     <ClInclude Include="compressorprocessor.h">
       <Filter>do</Filter>
@@ -62,10 +59,28 @@
     <ClInclude Include="ViewController.h">
       <Filter>do</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>res</Filter>
+    </ClInclude>
+    <ClInclude Include="ParamTag.h">
+      <Filter>do</Filter>
+    </ClInclude>
+    <ClInclude Include="WaveView.h">
+      <Filter>view</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>do</Filter>
+    </ClInclude>
+    <ClInclude Include="RangeMapping.h">
+      <Filter>do</Filter>
+    </ClInclude>
+    <ClInclude Include="ids.h">
+      <Filter>main</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc">
-      <Filter>main</Filter>
+      <Filter>res</Filter>
     </ResourceCompile>
   </ItemGroup>
 </Project>

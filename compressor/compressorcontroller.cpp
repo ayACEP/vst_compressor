@@ -37,7 +37,7 @@
 #include "compressorcontroller.h"
 #include "pluginterfaces/base/ustring.h"
 #include "pluginterfaces/base/ibstream.h"
-#include "compressorids.h"
+#include "ParamTag.h"
 #include "ViewController.h"
 #include "utils.h"
 
@@ -61,6 +61,9 @@ tresult PLUGIN_API CompressorController::initialize (FUnknown* context)
 		parameters.addParameter(STR16("Gain"), STR16("db"), 0, 1, ParameterInfo::kCanAutomate, ParamTag::kGainId);
 		parameters.addParameter(STR16("Attack"), STR16("ms"), 0, 1, ParameterInfo::kCanAutomate, ParamTag::kAttackId);
 		parameters.addParameter(STR16("Release"), STR16("ms"), 0, 1, ParameterInfo::kCanAutomate, ParamTag::kReleaseId);
+
+		thresholdRange.setRange(-60, 0);
+		ratioRange.setRange(0.1f, 16.0f);
 	}
 	return kResultTrue;
 }
@@ -86,28 +89,60 @@ tresult PLUGIN_API CompressorController::setComponentState (IBStream* state)
 	// we read only the gain and bypass value...
 	if (state)
 	{
+		int32 savedBypass;
 		ParamValue savedThreshold = 0.f;
+		ParamValue savedRatio = 0.f;
+		ParamValue savedGain = 0.f;
+		ParamValue savedAttack = 0.f;
+		ParamValue savedRelease = 0.f;
+
+		if (state->read(&savedBypass, sizeof(savedBypass)) == kResultFalse)
+		{
+			return kResultFalse;
+		}
 		if (state->read (&savedThreshold, sizeof (savedThreshold)) == kResultFalse)
+		{
+			return kResultFalse;
+		}
+		if (state->read(&savedRatio, sizeof(savedRatio)) == kResultFalse)
+		{
+			return kResultFalse;
+		}
+		if (state->read(&savedGain, sizeof(savedGain)) == kResultFalse)
+		{
+			return kResultFalse;
+		}
+		if (state->read(&savedAttack, sizeof(savedAttack)) == kResultFalse)
+		{
+			return kResultFalse;
+		}
+		if (state->read(&savedRelease, sizeof(savedRelease)) == kResultFalse)
 		{
 			return kResultFalse;
 		}
 
 #if BYTEORDER == kBigEndian
-		SWAP_32 (savedDelay)
+		SWAP_32(savedBypass)
+		SWAP_32(savedThreshold)
+		SWAP_32(savedRatio)
+		SWAP_32(savedGain)
+		SWAP_32(savedAttack)
+		SWAP_32(savedRelease)
 #endif
-		LOG("threshold %f\n", savedThreshold);
-		setParamNormalized (ParamTag::kThresholdId, savedThreshold);
 
-		// read the bypass
-		int32 bypassState;
-		if (state->read (&bypassState, sizeof (bypassState)) == kResultTrue)
-		{
-#if BYTEORDER == kBigEndian
-			SWAP_32 (bypassState)
-#endif
-			LOG("bypass %d\n", bypassState);
-			setParamNormalized (kBypassId, bypassState ? 1 : 0);
-		}
+		LOG("bypass %d\n", savedBypass);
+		LOG("threshold %f\n", savedThreshold);
+		LOG("ratio %f\n", savedRatio);
+		LOG("gain %f\n", savedGain);
+		LOG("attack %f\n", savedAttack);
+		LOG("release %f\n", savedRelease);
+
+		setParamNormalized(ParamTag::kBypassId, savedBypass ? 1 : 0);
+		setParamNormalized(ParamTag::kThresholdId, savedThreshold);
+		setParamNormalized(ParamTag::kRatioId, savedRatio);
+		setParamNormalized(ParamTag::kGainId, savedGain);
+		setParamNormalized(ParamTag::kAttackId, savedAttack);
+		setParamNormalized(ParamTag::kReleaseId, savedRelease);
 	}
 
 	return kResultTrue;
@@ -125,33 +160,104 @@ tresult PLUGIN_API CompressorController::getState(IBStream* state) {
 	return kResultFalse;
 }
 
+tresult PLUGIN_API CompressorController::setParamNormalized(ParamID tag, ParamValue value)
+{
+	//LOG("CompressorController::setParamNormalized %d, %f\n", tag, value);
+	return EditController::setParamNormalized(tag, value);
+}
+
+tresult PLUGIN_API CompressorController::getParamStringByValue(ParamID tag, ParamValue valueNormalized, String128 string)
+{
+	tresult result = kResultTrue;
+	TChar* units = getParameterObject(tag)->getInfo().units;
+	switch (tag)
+	{
+	case ParamTag::kThresholdId: {
+		ParamValue value = thresholdRange.toUsefulValue(valueNormalized);
+		swprintf(string, L"%.1f", value);
+	} break;
+	case ParamTag::kRatioId: {
+		ParamValue value = ratioRange.toUsefulValue(valueNormalized);
+		swprintf(string, L"%.1f:1", value);
+	} break;
+	default:
+		swprintf(string, L"%.2f %ws\0", valueNormalized, units);
+	}
+	//LOG("CompressorController::getParamStringByValue %d, from %f to %ws\n", tag, valueNormalized, string);
+	return result;
+}
+
+tresult PLUGIN_API CompressorController::getParamValueByString(ParamID tag, TChar * string, ParamValue & valueNormalized)
+{
+	tresult result = kResultTrue;
+	switch (tag)
+	{
+	case ParamTag::kRatioId:
+	default:
+		swscanf(string, L"%lf", &valueNormalized);
+	}
+	//LOG("CompressorController::getParamValueByString %d, from %ws to %f\n", tag, string, valueNormalized);
+	return result;
+}
+
 CView * CompressorController::verifyView(CView * view, const UIAttributes & attributes, const IUIDescription * description, VST3Editor * editor)
 {
-	LOG("CompressorController::verifyView\n");
+	//LOG("CompressorController::verifyView\n");
 	CControl* control = dynamic_cast<CControl*>(view);
-	if (control)
+	if (control == nullptr)
 	{
-		setShowUnits(control);
+		return view;
+	}
+	switch (control->getTag()) {
+	case ParamTag::kRatioId:
+		configRatioShow(control);
+		break;
+	default:
+		configDefulatShow(control);
 	}
 	return view;
 }
 
-void CompressorController::setShowUnits(CControl* control)
+void CompressorController::configRatioShow(CControl* control)
 {
 	CTextEdit* textEdit = dynamic_cast<CTextEdit*>(control);
 	if (textEdit)
 	{
-		TChar* units = getParameterObject(control->getTag())->getInfo().units;
+		/*textEdit->setValueToStringFunction([](float value, char* utf8String, CParamDisplay* display)
+		{
+			value = value * 16;
+			value = value < 0.1 ? 0.1 : value;
+			sprintf(utf8String, "%.1f:1", value);
+			LOG("to string: %s\n", utf8String);
+			return true;
+		});
+		textEdit->setStringToValueFunction([](UTF8StringPtr txt, float &result, CTextEdit* textEdit)
+		{
+			sscanf(txt, "%f", &result);
+			LOG("to value: %f\n", result);
+			return true;
+		});*/
+	}
+}
+
+void CompressorController::configDefulatShow(CControl* control)
+{
+	CTextEdit* textEdit = dynamic_cast<CTextEdit*>(control);
+	if (textEdit)
+	{
+		/*TChar* units = getParameterObject(control->getTag())->getInfo().units;
 		textEdit->setValueToStringFunction([units](float value, char* utf8String, CParamDisplay* display)
 		{
-			sprintf(utf8String, "%.4f %ws\0", value, units);
+			sprintf(utf8String, "%.2f %ws\0", value, units);
+			LOG("to string: %s\n", utf8String);
 			return true;
 		});
 		textEdit->setStringToValueFunction([&](UTF8StringPtr txt, float &result, CTextEdit* textEdit)
 		{
 			sscanf(txt, "%f", &result);
+			LOG("to value: %f\n", result);
 			return true;
-		});
+		});*/
 	}
 }
 

@@ -152,8 +152,17 @@ int APIENTRY wWinMain (_In_ HINSTANCE instance, _In_opt_ HINSTANCE prevInstance,
 	if (FAILED (hr))
 		return FALSE;
 
+#ifdef _DEBUG
+	AllocConsole();
+	freopen("conout$", "w", stdout);
+#endif
+
 	Steinberg::Vst::EditorHost::Platform::instance ().run (lpCmdLine, instance);
 	CoUninitialize ();
+
+#ifdef _DEBUG
+	FreeConsole();
+#endif
 
 	return 0;
 }

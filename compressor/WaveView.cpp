@@ -1,4 +1,4 @@
-#include "wave_view.h"
+#include "WaveView.h"
 
 namespace VSTGUI {
 

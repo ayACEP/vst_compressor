@@ -1,5 +1,5 @@
 #include "ViewController.h"
-#include "compressorids.h"
+#include "ParamTag.h"
 #include "utils.h"
 
 namespace Steinberg {

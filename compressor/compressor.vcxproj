@@ -351,9 +351,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="compressorprocessor.cpp" />
     <ClCompile Include="E:\VST_SDK\VST3_SDK\public.sdk\source\main\dllmain.cpp" />
     <ClCompile Include="factory.cpp" />
+    <ClCompile Include="RangeMapping.cpp" />
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="ViewController.cpp" />
-    <ClCompile Include="wave_view.cpp" />
+    <ClCompile Include="WaveView.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="E:/VST_SDK/VST3_SDK/build/ZERO_CHECK.vcxproj">
@@ -371,12 +372,15 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="compressorcontroller.h" />
-    <ClInclude Include="compressorids.h" />
     <ClInclude Include="compressorprocessor.h" />
+    <ClInclude Include="ids.h" />
+    <ClInclude Include="ParamTag.h" />
+    <ClInclude Include="RangeMapping.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="version.h" />
     <ClInclude Include="ViewController.h" />
-    <ClInclude Include="wave_view.h" />
+    <ClInclude Include="WaveView.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
