@@ -1,10 +1,12 @@
 #include "compressorprocessor.h"
 #include <algorithm>
 #include <cstdlib>
+#include <math.h>
 #include "pluginterfaces/base/ustring.h"
 #include "pluginterfaces/base/ibstream.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "ParamTag.h"
+#include "ParamUtils.h"
 #include "ids.h"
 #include "utils.h"
 
@@ -13,9 +15,11 @@ namespace Vst {
 
 //-----------------------------------------------------------------------------
 CompressorProcessor::CompressorProcessor ()
-: mThreshold(1)
-, mBypass (false)
 {
+	mBypass = true;
+	mThreshold = 1;
+	mRatio = 1;
+	mGain = 1;
 	setControllerClass (CompressorControllerUID);
 }
 
@@ -101,25 +105,6 @@ tresult PLUGIN_API CompressorProcessor::process (ProcessData& data)
 		}
 	}
 
-	// bypass only copy
-	if (mBypass && data.numSamples > 0)
-	{
-		SpeakerArrangement arr;
-		getBusArrangement(kOutput, 0, arr);
-		int32 numChannels = SpeakerArr::getChannelCount(arr);
-
-		for (int32 channel = 0; channel < numChannels; channel++)
-		{
-			float* inputChannel = data.inputs[0].channelBuffers32[channel];
-			float* outputChannel = data.outputs[0].channelBuffers32[channel];
-			for (int32 sample = 0; sample < data.numSamples; sample++)
-			{
-				outputChannel[sample] = inputChannel[sample];
-			}
-		}
-		return kResultTrue;
-	}
-
 	if (data.numSamples > 0)
 	{
 		SpeakerArrangement arr;
@@ -134,9 +119,27 @@ tresult PLUGIN_API CompressorProcessor::process (ProcessData& data)
 		{
 			float* inputChannel = data.inputs[0].channelBuffers32[channel];
 			float* outputChannel = data.outputs[0].channelBuffers32[channel];
-			for (int32 sample = 0; sample < data.numSamples; sample++)
+			for (int32 i = 0; i < data.numSamples; i++)
 			{
-				outputChannel[sample] = inputChannel[sample] * mThreshold;
+				float &sample = inputChannel[i];
+				float &osample = outputChannel[i];
+				// bypass copy only
+				if (mBypass)
+				{
+					osample = sample;
+				}
+				else
+				{
+					if (fabsf(sample) > mThreshold)
+					{
+						float trueRatio = 1.0 / ParamUtils::get_ratio_range().toUsefulValue(mRatio);
+						osample = sample * trueRatio;
+					}
+					else
+					{
+						osample = sample;
+					}
+				}
 			}
 		}
 	}	
@@ -148,7 +151,9 @@ tresult PLUGIN_API CompressorProcessor::setState (IBStream* state)
 {
 	LOG("CompressorProcessor::setState\n");
 	if (!state)
+	{
 		return kResultFalse;
+	}
 
 	// called when we load a preset, the model has to be reloaded
 

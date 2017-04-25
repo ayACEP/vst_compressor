@@ -4,17 +4,16 @@ class RangeMapping
 {
 public:
 	RangeMapping();
-	RangeMapping(float min, float max);
+	RangeMapping(double min, double max);
 	~RangeMapping() {};
 
-	void setRange(float min, float max);
-	float toNormalizeValue(float usefulValue);
-	float toUsefulValue(float normalizeValue);
+	void setRange(double min, double max);
+	double toNormalizeValue(double usefulValue);
+	double toUsefulValue(double normalizeValue);
 
 private:
-	float min1;
-	float max1;
-	float min2;
-	float max2;
+	double min1;
+	double max1;
+	double min2;
+	double max2;
 };
-

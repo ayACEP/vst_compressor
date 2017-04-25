@@ -44,9 +44,6 @@ private:
 	void configDefulatShow(CControl* control);
 	void configRatioShow(CControl* control);
 
-private:
-	RangeMapping thresholdRange;
-	RangeMapping ratioRange;
 };
 
 //------------------------------------------------------------------------

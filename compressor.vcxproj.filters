@@ -31,6 +31,9 @@
     <ClCompile Include="RangeMapping.cpp">
       <Filter>do</Filter>
     </ClCompile>
+    <ClCompile Include="ParamUtils.cpp">
+      <Filter>do</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="view">
@@ -76,6 +79,9 @@
     </ClInclude>
     <ClInclude Include="ids.h">
       <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="ParamUtils.h">
+      <Filter>do</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

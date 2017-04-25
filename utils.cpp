@@ -1,6 +1,7 @@
 #include "utils.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include <math.h>
 
 int c = 0;
 
@@ -48,12 +49,12 @@ void LOG_PROCESS_FLOW(char * format, ...)
 	va_end(args);
 }
 
-void rangeToNormalize(int min, int max)
+double normalizedValue2dBFS(Steinberg::Vst::ParamValue value)
 {
-
+	return 20.0 * log10(fabs(value) / 1.0);
 }
 
-void normalizeToRange(int min, int max)
+Steinberg::Vst::ParamValue dBFS2NormalizedValue(double dBFS)
 {
-
+	return pow(10.0, dBFS / 20.0) * 1.0;
 }

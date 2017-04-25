@@ -4,6 +4,7 @@
 #include "ParamTag.h"
 #include "ViewController.h"
 #include "utils.h"
+#include "ParamUtils.h"
 
 #if TARGET_OS_IPHONE
 #include "interappaudio/iosEditor.h"
@@ -26,8 +27,6 @@ tresult PLUGIN_API CompressorController::initialize (FUnknown* context)
 		parameters.addParameter(STR16("Attack"), STR16("ms"), 0, 1, ParameterInfo::kCanAutomate, ParamTag::kAttackId);
 		parameters.addParameter(STR16("Release"), STR16("ms"), 0, 1, ParameterInfo::kCanAutomate, ParamTag::kReleaseId);
 
-		thresholdRange.setRange(-60, 0);
-		ratioRange.setRange(0.1f, 16.0f);
 	}
 	return kResultTrue;
 }
@@ -137,12 +136,16 @@ tresult PLUGIN_API CompressorController::getParamStringByValue(ParamID tag, Para
 	switch (tag)
 	{
 	case ParamTag::kThresholdId: {
-		ParamValue value = thresholdRange.toUsefulValue(valueNormalized);
-		swprintf(string, L"%.1f", value);
+		ParamValue value = normalizedValue2dBFS(valueNormalized);
+		swprintf(string, L"%.2f %ws", value, units);
 	} break;
 	case ParamTag::kRatioId: {
-		ParamValue value = ratioRange.toUsefulValue(valueNormalized);
+		ParamValue value = ParamUtils::get_ratio_range().toUsefulValue(valueNormalized);
 		swprintf(string, L"%.1f:1", value);
+	} break;
+	case ParamTag::kGainId: {
+		ParamValue value = ParamUtils::get_gain_range().toUsefulValue(valueNormalized);
+		swprintf(string, L"%.2f %ws", value, units);
 	} break;
 	default:
 		swprintf(string, L"%.2f %ws\0", valueNormalized, units);
@@ -154,9 +157,25 @@ tresult PLUGIN_API CompressorController::getParamStringByValue(ParamID tag, Para
 tresult PLUGIN_API CompressorController::getParamValueByString(ParamID tag, TChar * string, ParamValue & valueNormalized)
 {
 	tresult result = kResultTrue;
+	ParamValue tempValue = 0.0;
+
 	switch (tag)
 	{
+	case ParamTag::kThresholdId:
+	{
+		swscanf(string, L"%lf", &tempValue);
+		valueNormalized = dBFS2NormalizedValue(tempValue);
+	} break;
 	case ParamTag::kRatioId:
+	{
+		swscanf(string, L"%lf", &tempValue);
+		valueNormalized = ParamUtils::get_ratio_range().toNormalizeValue(tempValue);
+	} break;
+	case ParamTag::kGainId:
+	{
+		swscanf(string, L"%lf", &tempValue);
+		valueNormalized = ParamUtils::get_gain_range().toNormalizeValue(tempValue);
+	} break;
 	default:
 		swscanf(string, L"%lf", &valueNormalized);
 	}

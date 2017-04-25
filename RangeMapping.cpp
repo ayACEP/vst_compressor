@@ -2,28 +2,27 @@
 
 RangeMapping::RangeMapping()
 {
-	min1 = 0;
-	max1 = 1;
+	min1 = 0.0;
+	max1 = 1.0;
 }
 
-RangeMapping::RangeMapping(float min, float max)
+RangeMapping::RangeMapping(double min, double max): RangeMapping()
 {
-	RangeMapping();
 	setRange(min, max);
 }
 
-void RangeMapping::setRange(float min, float max)
+void RangeMapping::setRange(double min, double max)
 {
 	min2 = min;
 	max2 = max;
 }
 
-float RangeMapping::toNormalizeValue(float usefulValue)
+double RangeMapping::toNormalizeValue(double usefulValue)
 {
 	return (usefulValue - min2) / (max2 - min2) * (max1 - min1) + min1;
 }
 
-float RangeMapping::toUsefulValue(float normalizeValue)
+double RangeMapping::toUsefulValue(double normalizeValue)
 {
 	return (normalizeValue - min1) / (max1 - min1) * (max2 - min2) + min2;
 }
