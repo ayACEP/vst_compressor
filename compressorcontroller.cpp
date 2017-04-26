@@ -125,7 +125,7 @@ tresult PLUGIN_API CompressorController::getState(IBStream* state) {
 
 tresult PLUGIN_API CompressorController::setParamNormalized(ParamID tag, ParamValue value)
 {
-	//LOG("CompressorController::setParamNormalized %d, %f\n", tag, value);
+	LOG("CompressorController::setParamNormalized %d, %f\n", tag, value);
 	return EditController::setParamNormalized(tag, value);
 }
 

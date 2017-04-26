@@ -16,10 +16,10 @@ namespace Vst {
 //-----------------------------------------------------------------------------
 CompressorProcessor::CompressorProcessor ()
 {
-	mBypass = true;
+	mBypass = false;
 	mThreshold = 1;
 	mRatio = 1;
-	mGain = 1;
+	mGain = 0.5;
 	setControllerClass (CompressorControllerUID);
 }
 
@@ -121,24 +121,38 @@ tresult PLUGIN_API CompressorProcessor::process (ProcessData& data)
 			float* outputChannel = data.outputs[0].channelBuffers32[channel];
 			for (int32 i = 0; i < data.numSamples; i++)
 			{
-				float &sample = inputChannel[i];
-				float &osample = outputChannel[i];
+				float &in = inputChannel[i];
+				float &out = outputChannel[i];
+				//LOG("%.4f ", in);
 				// bypass copy only
 				if (mBypass)
 				{
-					osample = sample;
+					out = in;
 				}
 				else
 				{
-					if (fabsf(sample) > mThreshold)
+					// 1.compress
+					float threshold = mThreshold;
+					float over = fabsf(in) - threshold;
+					if (over > 0)
 					{
-						float trueRatio = 1.0 / ParamUtils::get_ratio_range().toUsefulValue(mRatio);
-						osample = sample * trueRatio;
+						float trueRatio = ParamUtils::get_ratio_range().toUsefulValue(mRatio);
+						float plusOut = (over / trueRatio) + threshold;
+						in = in > 0 ? plusOut : -plusOut;
+						//LOG_PROCESS("ratio %.2f:1\n", trueRatio);
 					}
-					else
-					{
-						osample = sample;
-					}
+
+					// 2.gain
+					double gaindBFS = ParamUtils::get_gain_range().toUsefulValue(mGain);
+					double gain = 1 - dBFS2NormalizedValue(-abs(gaindBFS));
+					float gainedOut = gaindBFS > 0 ? fabsf(in) + gain : fabsf(in) - gain;
+					gainedOut = gainedOut > 1 ? 1 : gainedOut;
+					gainedOut = gainedOut < 0 ? 0 : gainedOut;
+					in = in > 0 ? gainedOut : -gainedOut;
+					//LOG_PROCESS("gain %.2f dBFS\n", gaindBFS);
+					LOG_PROCESS("normalized gain %.2f \n", gain);
+
+					out = in;
 				}
 			}
 		}

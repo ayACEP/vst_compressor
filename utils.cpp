@@ -25,7 +25,7 @@ void LOG(char* format, ...)
 
 void LOG_PROCESS(char * format, ...)
 {
-	if (c++ % 100 != 0)
+	if (c++ % 20000 != 0)
 	{
 		return;
 	}
