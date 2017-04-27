@@ -20,6 +20,8 @@ CompressorProcessor::CompressorProcessor ()
 	mThreshold = 1;
 	mRatio = 1;
 	mGain = 0.5;
+	mAttack = 0;
+	mRelease = 0;
 	setControllerClass (CompressorControllerUID);
 }
 
@@ -144,14 +146,14 @@ tresult PLUGIN_API CompressorProcessor::process (ProcessData& data)
 
 					// 2.gain
 					double gaindBFS = ParamUtils::get_gain_range().toUsefulValue(mGain);
-					double gain = 1 - dBFS2NormalizedValue(-abs(gaindBFS));
-					float gainedOut = gaindBFS > 0 ? fabsf(in) + gain : fabsf(in) - gain;
-					gainedOut = gainedOut > 1 ? 1 : gainedOut;
-					gainedOut = gainedOut < 0 ? 0 : gainedOut;
-					in = in > 0 ? gainedOut : -gainedOut;
-					//LOG_PROCESS("gain %.2f dBFS\n", gaindBFS);
-					LOG_PROCESS("normalized gain %.2f \n", gain);
+					double indBFS = normalizedValue2dBFS(in);
+					double gaineddBFS = indBFS + gaindBFS;
+					gaineddBFS = gaineddBFS > 0 ? 0 : gaineddBFS;
+					double gained = dBFS2NormalizedValue(gaineddBFS);
+					in = in > 0 ? gained : -gained;
+					//LOG_PROCESS("in: %f, indBFS: %f, gaindBFS %f, gaineddBFS %f, gained %f\n", in, indBFS, gaindBFS, gaineddBFS, gained);
 
+					// final. out
 					out = in;
 				}
 			}

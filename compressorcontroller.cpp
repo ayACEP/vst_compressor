@@ -125,7 +125,7 @@ tresult PLUGIN_API CompressorController::getState(IBStream* state) {
 
 tresult PLUGIN_API CompressorController::setParamNormalized(ParamID tag, ParamValue value)
 {
-	LOG("CompressorController::setParamNormalized %d, %f\n", tag, value);
+	//LOG("CompressorController::setParamNormalized %d, %f\n", tag, value);
 	return EditController::setParamNormalized(tag, value);
 }
 
@@ -135,17 +135,30 @@ tresult PLUGIN_API CompressorController::getParamStringByValue(ParamID tag, Para
 	TChar* units = getParameterObject(tag)->getInfo().units;
 	switch (tag)
 	{
-	case ParamTag::kThresholdId: {
+	case ParamTag::kThresholdId: 
+	{
 		ParamValue value = normalizedValue2dBFS(valueNormalized);
 		swprintf(string, L"%.2f %ws", value, units);
 	} break;
-	case ParamTag::kRatioId: {
+	case ParamTag::kRatioId: 
+	{
 		ParamValue value = ParamUtils::get_ratio_range().toUsefulValue(valueNormalized);
 		swprintf(string, L"%.1f:1", value);
 	} break;
-	case ParamTag::kGainId: {
+	case ParamTag::kGainId: 
+	{
 		ParamValue value = ParamUtils::get_gain_range().toUsefulValue(valueNormalized);
 		swprintf(string, L"%.2f %ws", value, units);
+	} break;
+	case ParamTag::kAttackId: 
+	{
+		ParamValue value = ParamUtils::get_attack_range().toUsefulValue(valueNormalized);
+		swprintf(string, L"%.1f %ws", value, units);
+	} break;
+	case ParamTag::kReleaseId: 
+	{
+		ParamValue value = ParamUtils::get_release_range().toUsefulValue(valueNormalized);
+		swprintf(string, L"%.0f %ws", value, units);
 	} break;
 	default:
 		swprintf(string, L"%.2f %ws\0", valueNormalized, units);
@@ -175,6 +188,16 @@ tresult PLUGIN_API CompressorController::getParamValueByString(ParamID tag, TCha
 	{
 		swscanf(string, L"%lf", &tempValue);
 		valueNormalized = ParamUtils::get_gain_range().toNormalizeValue(tempValue);
+	} break;
+	case ParamTag::kAttackId:
+	{
+		swscanf(string, L"%lf", &tempValue);
+		valueNormalized = ParamUtils::get_attack_range().toNormalizeValue(tempValue);
+	} break;
+	case ParamTag::kReleaseId:
+	{
+		swscanf(string, L"%lf", &tempValue);
+		valueNormalized = ParamUtils::get_release_range().toNormalizeValue(tempValue);
 	} break;
 	default:
 		swscanf(string, L"%lf", &valueNormalized);
