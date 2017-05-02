@@ -22,7 +22,12 @@ CompressorProcessor::CompressorProcessor ()
 	mGain = 0.5;
 	mAttack = 0;
 	mRelease = 0;
+	prevIn = 0;
 	setControllerClass (CompressorControllerUID);
+}
+
+CompressorProcessor::~CompressorProcessor()
+{
 }
 
 //-----------------------------------------------------------------------------
@@ -116,11 +121,14 @@ tresult PLUGIN_API CompressorProcessor::process (ProcessData& data)
 		//LOG_PROCESS("numInputs: %d\n", data.numInputs);
 		//LOG_PROCESS_FLOW("numSamples: %d\n", data.numSamples);
 		//LOG_PROCESS_FLOW("channels: %d\n", numChannels);
-
+		
 		for (int32 channel = 0; channel < numChannels; channel++)
 		{
 			float* inputChannel = data.inputs[0].channelBuffers32[channel];
 			float* outputChannel = data.outputs[0].channelBuffers32[channel];
+
+			int begin = 0;
+
 			for (int32 i = 0; i < data.numSamples; i++)
 			{
 				float &in = inputChannel[i];
@@ -130,36 +138,56 @@ tresult PLUGIN_API CompressorProcessor::process (ProcessData& data)
 				if (mBypass)
 				{
 					out = in;
+					continue;
 				}
 				else
 				{
-					// 1.compress
-					float threshold = mThreshold;
-					float over = fabsf(in) - threshold;
-					if (over > 0)
-					{
-						float trueRatio = ParamUtils::get_ratio_range().toUsefulValue(mRatio);
-						float plusOut = (over / trueRatio) + threshold;
-						in = in > 0 ? plusOut : -plusOut;
-						//LOG_PROCESS("ratio %.2f:1\n", trueRatio);
+					// 1.get half cycle max
+					if ((in > 0 && prevIn <= 0) || (in < 0 && prevIn >= 0)) {
+						processHalfCycle(inputChannel, outputChannel, begin, i);
+						begin = i;// record half cycle begin point
 					}
-
-					// 2.gain
-					double gaindBFS = ParamUtils::get_gain_range().toUsefulValue(mGain);
-					double indBFS = normalizedValue2dBFS(in);
-					double gaineddBFS = indBFS + gaindBFS;
-					gaineddBFS = gaineddBFS > 0 ? 0 : gaineddBFS;
-					double gained = dBFS2NormalizedValue(gaineddBFS);
-					in = in > 0 ? gained : -gained;
-					//LOG_PROCESS("in: %f, indBFS: %f, gaindBFS %f, gaineddBFS %f, gained %f\n", in, indBFS, gaindBFS, gaineddBFS, gained);
-
-					// final. out
-					out = in;
 				}
+				prevIn = in;
 			}
 		}
 	}	
 	return kResultTrue;
+}
+
+void CompressorProcessor::processHalfCycle(float* inBuf, float* outBuf, int begin, int end)
+{
+	if (end <= begin)
+	{
+		return;
+	}
+	LOG("1 %d %d\n", begin, end);
+	// 1.find max
+	float max = 0;
+	for (int i = begin; i < end; i++)
+	{
+		outBuf[i] = abs(inBuf[i]);
+		float &in = outBuf[i];
+		max = in > max ? in : max;
+	}
+	LOG_PROCESS("%f\n", max);
+	// 2.calc reduce ratio
+	float over = max - mThreshold;
+	float reduceRatio = 1;
+	if (over > 0)
+	{
+		reduceRatio = (over / ParamUtils::get_ratio_range().toUsefulValue(mRatio) + mThreshold) / max;
+	}
+	else
+	{
+		return;
+	}
+	LOG_PROCESS("2\n");
+	// 3.reduce
+	for (int i = begin; i < end; i++)
+	{
+		outBuf[i] = inBuf[i] < 0 ? -outBuf[i] * reduceRatio : outBuf[i] * reduceRatio;
+	}
 }
 
 //------------------------------------------------------------------------

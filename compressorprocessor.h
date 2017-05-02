@@ -9,7 +9,8 @@ namespace Vst {
 class CompressorProcessor : public AudioEffect
 {
 public:
-	CompressorProcessor ();
+	CompressorProcessor();
+	~CompressorProcessor();
 
 	static FUnknown* createInstance(void*)
 	{
@@ -26,6 +27,9 @@ public:
 	tresult PLUGIN_API setState (IBStream* state) SMTG_OVERRIDE;
 	tresult PLUGIN_API getState (IBStream* state) SMTG_OVERRIDE;
 
+private:
+	void processHalfCycle(float* inBuf, float* outBuf, int begin, int end);
+
 protected:
 	bool mBypass;
 	ParamValue mThreshold;
@@ -33,6 +37,8 @@ protected:
 	ParamValue mGain;
 	ParamValue mAttack;
 	ParamValue mRelease;
+private:
+	float prevIn;
 };
 
 //------------------------------------------------------------------------
