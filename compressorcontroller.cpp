@@ -18,6 +18,7 @@ tresult PLUGIN_API CompressorController::initialize (FUnknown* context)
 {
 	LOG("CompressorController::initialize\n");
 	tresult result = EditController::initialize (context);
+	setKnobMode(KnobModes::kLinearMode);
 	if (result == kResultTrue)
 	{
 		parameters.addParameter(STR16("Bypass"), 0, 1, 0, ParameterInfo::kCanAutomate | ParameterInfo::kIsBypass, ParamTag::kBypassId);
