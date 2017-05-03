@@ -1,6 +1,4 @@
 #include "compressorprocessor.h"
-#include <algorithm>
-#include <cstdlib>
 #include <math.h>
 #include "pluginterfaces/base/ustring.h"
 #include "pluginterfaces/base/ibstream.h"
@@ -142,9 +140,11 @@ tresult PLUGIN_API CompressorProcessor::process (ProcessData& data)
 				}
 				else
 				{
-					// 1.get half cycle max
-					if ((in > 0 && prevIn <= 0) || (in < 0 && prevIn >= 0)) {
-						processHalfCycle(inputChannel, outputChannel, begin, i);
+					// 1.process half cycle
+					//LOG("1 %f %f\n", in, prevIn);
+					if ((in > 0 && prevIn <= 0) || (in < 0 && prevIn >= 0) || i == data.numSamples - 1)
+					{
+						processHalfCycle(inputChannel, outputChannel, begin, i + 1);
 						begin = i;// record half cycle begin point
 					}
 				}
@@ -161,32 +161,33 @@ void CompressorProcessor::processHalfCycle(float* inBuf, float* outBuf, int begi
 	{
 		return;
 	}
-	LOG("1 %d %d\n", begin, end);
+	//LOG_PROCESS("1 %d %d\n", begin, end);
+
 	// 1.find max
+
 	float max = 0;
 	for (int i = begin; i < end; i++)
 	{
-		outBuf[i] = abs(inBuf[i]);
-		float &in = outBuf[i];
+		float in = abs(inBuf[i]);
 		max = in > max ? in : max;
 	}
-	LOG_PROCESS("%f\n", max);
+	//LOG_PROCESS_FLOW("max %f\n", max);
+
 	// 2.calc reduce ratio
+
 	float over = max - mThreshold;
 	float reduceRatio = 1;
 	if (over > 0)
 	{
 		reduceRatio = (over / ParamUtils::get_ratio_range().toUsefulValue(mRatio) + mThreshold) / max;
+		LOG_PROCESS_FLOW("over: %f, threshold: %f, max: %f, reduceRatio: %f\n", over, mThreshold, max, reduceRatio);
 	}
-	else
-	{
-		return;
-	}
-	LOG_PROCESS("2\n");
+
 	// 3.reduce
+
 	for (int i = begin; i < end; i++)
 	{
-		outBuf[i] = inBuf[i] < 0 ? -outBuf[i] * reduceRatio : outBuf[i] * reduceRatio;
+		outBuf[i] = inBuf[i] * reduceRatio;
 	}
 }
 

@@ -3,8 +3,6 @@
 #include <stdarg.h>
 #include <math.h>
 
-int c = 0;
-
 void logInternal(char* format, va_list args)
 {
 	char buffer[256] = { 0 };
@@ -23,9 +21,12 @@ void LOG(char* format, ...)
 	va_end(args);
 }
 
+int c = 0;
+int mod = 20000;
+
 void LOG_PROCESS(char * format, ...)
 {
-	if (c++ % 20000 != 0)
+	if (++c % mod != 0)
 	{
 		return;
 	}
@@ -38,7 +39,7 @@ void LOG_PROCESS(char * format, ...)
 
 void LOG_PROCESS_FLOW(char * format, ...)
 {
-	if (c % 100 != 0)
+	if (c % mod != 0)
 	{
 		return;
 	}
