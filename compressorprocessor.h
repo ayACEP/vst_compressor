@@ -28,7 +28,8 @@ public:
 	tresult PLUGIN_API getState (IBStream* state) SMTG_OVERRIDE;
 
 private:
-	void processHalfCycle(float* inBuf, float* outBuf, int begin, int end);
+	tresult PLUGIN_API process1(ProcessData& data);
+	tresult PLUGIN_API process2(ProcessData& data);
 
 protected:
 	bool mBypass;
@@ -38,7 +39,9 @@ protected:
 	ParamValue mAttack;
 	ParamValue mRelease;
 private:
-	float prevIn;
+	Sample32 mEnv;
+	Sample32* mDelayIn[2];
+	Sample32* mProcessIn[2];
 };
 
 //------------------------------------------------------------------------

@@ -22,7 +22,7 @@ void LOG(char* format, ...)
 }
 
 int c = 0;
-int mod = 20000;
+int mod = 10000;
 
 void LOG_PROCESS(char * format, ...)
 {
