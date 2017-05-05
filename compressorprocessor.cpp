@@ -31,10 +31,10 @@ CompressorProcessor::CompressorProcessor ()
 
 CompressorProcessor::~CompressorProcessor()
 {
-	//if (mDelayIn[0]) delete mDelayIn[0];
-	//if (mDelayIn[1]) delete mDelayIn[1];
-	//if (mProcessIn[0]) delete mProcessIn[0];
-	//if (mProcessIn[1]) delete mProcessIn[1];
+	if (mDelayIn[0]) delete mDelayIn[0];
+	if (mDelayIn[1]) delete mDelayIn[1];
+	if (mProcessIn[0]) delete mProcessIn[0];
+	if (mProcessIn[1]) delete mProcessIn[1];
 }
 
 //-----------------------------------------------------------------------------
@@ -170,17 +170,13 @@ tresult PLUGIN_API CompressorProcessor::process2(ProcessData& data)
 	delaySampleSize = delaySampleSize < data.numSamples ? delaySampleSize : data.numSamples;
 	if (mDelayIn[0] == nullptr)
 	{
-		mDelayIn[0] = new Sample32(delaySampleSize);
-		mDelayIn[1] = new Sample32(delaySampleSize);
-		memset(mDelayIn[0], 0, delaySampleSize);
-		memset(mDelayIn[1], 0, delaySampleSize);
-		mProcessIn[0] = new Sample32(data.numSamples);
-		mProcessIn[1] = new Sample32(data.numSamples);
-		memset(mProcessIn[0], 0, data.numSamples);
-		memset(mProcessIn[1], 0, data.numSamples);
+		mDelayIn[0] = new Sample32[delaySampleSize]{ 0 };
+		mDelayIn[1] = new Sample32[delaySampleSize]{ 0 };
+		mProcessIn[0] = new Sample32[data.numSamples]{ 0 };
+		mProcessIn[1] = new Sample32[data.numSamples]{ 0 };
 	}
 
-	memcpy(mProcessIn[0], mDelayIn[0], delaySampleSize * sizeof(Sample32));
+	//memcpy(mProcessIn[0], mDelayIn[0], delaySampleSize * sizeof(Sample32));
 	//memcpy(mProcessIn[0] + delaySampleSize, ins0, (data.numSamples - delaySampleSize) * sizeof(Sample32));
 	//memcpy(mProcessIn[1], mDelayIn[1], delaySampleSize * sizeof(Sample32));
 	//memcpy(mProcessIn[1] + delaySampleSize, ins1, (data.numSamples - delaySampleSize) * sizeof(Sample32));
