@@ -135,6 +135,7 @@ void Platform::run (LPWSTR lpCmdLine, HINSTANCE hInstance)
 	application->init (cmdArgStrings);
 	App* app = dynamic_cast<App*>(application.get());
 	app->testProcess("sin.wav");
+	app->testProcess("drum kick.wav");
 
 	MSG msg;
 	while (GetMessage (&msg, NULL, 0, 0))

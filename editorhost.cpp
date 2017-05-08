@@ -266,10 +266,10 @@ void App::testProcess(char* fileName)
 			return;
 		}
 		// read head;
-		char* head = new char[0x30];
-		fread(head, sizeof(char), 0x30, file);
+		char* head = new char[0x2C];
+		fread(head, sizeof(char), 0x2C, file);
 		int sampleRate = *(int*)(head + 0x18);
-		long long dataSize = *(long long*)(head + 0x28);
+		int dataSize = *(int*)(head + 0x28);
 
 		// read data
 		short* buf = (short*) new char[dataSize];
@@ -295,7 +295,8 @@ void App::testProcess(char* fileName)
 			}
 
 			ProcessData data;
-			data.processContext = new ProcessContext();
+			ProcessContext context;
+			data.processContext = &context;
 			data.processContext->sampleRate = sampleRate;
 			data.numSamples = sampleBufSize;
 
@@ -317,7 +318,6 @@ void App::testProcess(char* fileName)
 			delete[] data.outputs[0].channelBuffers32;
 			delete[] data.inputs;
 			delete[] data.outputs;
-			delete data.processContext;
 
 			for (int i = 0; i < processeSampleSize; i++) {
 				buf[(begin + i) * 2] = (short) (out0[i] * 32767.0f);
@@ -328,12 +328,16 @@ void App::testProcess(char* fileName)
 
 		FILE *outFile = fopen(std::string(fileName).insert(0, "d_").c_str(), "wb");
 		if (!outFile) {
-			return;
+			goto finish;
 		}
-		fwrite(head, sizeof(char), 0x30, outFile);
+
+		int fileSize = 0x2C + dataSize - 8;
+		memcpy(head + 4, &fileSize, 4);
+		fwrite(head, sizeof(char), 0x2C, outFile);
 		fwrite(buf, sizeof(char), dataSize, outFile);
 		fclose(outFile);
 
+finish:
 		delete[] out0;
 		delete[] out1;
 		delete[] in0;
@@ -341,6 +345,7 @@ void App::testProcess(char* fileName)
 		delete[] buf;
 		delete[] head;
 	}
+	processor->release();
 }
 
 //------------------------------------------------------------------------
