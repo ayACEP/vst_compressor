@@ -16,25 +16,16 @@ namespace Vst {
 CompressorProcessor::CompressorProcessor ()
 {
 	mBypass = false;
-	mThreshold = 1;
+	mThreshold = 0.5;
 	mRatio = 1;
 	mGain = 0.5;
 	mAttack = 0;
 	mRelease = 0;
 	setControllerClass (CompressorControllerUID);
-
-	mDelayIn[0] = nullptr;
-	mDelayIn[1] = nullptr;
-	mProcessIn[0] = nullptr;
-	mProcessIn[1] = nullptr;
 }
 
 CompressorProcessor::~CompressorProcessor()
 {
-	if (mDelayIn[0]) delete mDelayIn[0];
-	if (mDelayIn[1]) delete mDelayIn[1];
-	if (mProcessIn[0]) delete mProcessIn[0];
-	if (mProcessIn[1]) delete mProcessIn[1];
 }
 
 //-----------------------------------------------------------------------------
@@ -47,7 +38,24 @@ tresult PLUGIN_API CompressorProcessor::initialize (FUnknown* context)
 		addAudioInput (STR16 ("AudioInput"), SpeakerArr::kStereo);
 		addAudioOutput (STR16 ("AudioOutput"), SpeakerArr::kStereo);
 	}
+
+	mDelayIn[0] = nullptr;
+	mDelayIn[1] = nullptr;
+	mProcessIn[0] = nullptr;
+	mProcessIn[1] = nullptr;
+	mTrueRatio[0] = -1;
+	mTrueRatio[1] = -1;
+
 	return result;
+}
+
+tresult PLUGIN_API CompressorProcessor::terminate()
+{
+	if (mDelayIn[0]) delete mDelayIn[0];
+	if (mDelayIn[1]) delete mDelayIn[1];
+	if (mProcessIn[0]) delete mProcessIn[0];
+	if (mProcessIn[1]) delete mProcessIn[1];
+	return AudioEffect::terminate();
 }
 
 //-----------------------------------------------------------------------------
@@ -154,40 +162,101 @@ tresult PLUGIN_API CompressorProcessor::process1(ProcessData& data)
 
 tresult PLUGIN_API CompressorProcessor::process2(ProcessData& data)
 {
-	Sample32* ins0 = data.inputs[0].channelBuffers32[0];
-	Sample32* outs0 = data.outputs[0].channelBuffers32[0];
-	Sample32* ins1 = data.inputs[0].channelBuffers32[1];
-	Sample32* outs1 = data.outputs[0].channelBuffers32[1];
+	SpeakerArrangement arr;
+	getBusArrangement(kOutput, 0, arr);
+	int32 numChannels = SpeakerArr::getChannelCount(arr);
 
+	// bypass copy
 	if (mBypass) {
-		memcpy(outs0, ins0, data.numSamples * sizeof(Sample32));
-		memcpy(outs1, ins1, data.numSamples * sizeof(Sample32));
+		for (int i = 0; i < numChannels; i++) {
+			Sample32* ins = data.inputs[0].channelBuffers32[i];
+			Sample32* outs = data.outputs[0].channelBuffers32[i];
+			memcpy(outs, ins, data.numSamples * sizeof(Sample32));
+		}
 		return kResultFalse;
 	}
 
-	// 1.save 15ms
-	int delaySampleSize = (int)(data.processContext->sampleRate / 1000 * 15);
-	delaySampleSize = delaySampleSize < data.numSamples ? delaySampleSize : data.numSamples;
+	//LOG_PROCESS("%d, %d\n", data.numSamples, data.numInputs);
+	// alloc memory
 	if (mDelayIn[0] == nullptr)
 	{
-		mDelayIn[0] = new Sample32[delaySampleSize]{ 0 };
-		mDelayIn[1] = new Sample32[delaySampleSize]{ 0 };
-		mProcessIn[0] = new Sample32[data.numSamples]{ 0 };
-		mProcessIn[1] = new Sample32[data.numSamples]{ 0 };
+		// delay 15ms
+		mDelaySampleSize = (int)(data.processContext->sampleRate / 1000 * 5);
+		mDelaySampleSize = mDelaySampleSize < data.numSamples ? mDelaySampleSize : data.numSamples;
+
+		mDelayIn[0] = new Sample32[mDelaySampleSize]{ 0 };
+		mDelayIn[1] = new Sample32[mDelaySampleSize]{ 0 };
+		mProcessIn[0] = new Sample32[mDelaySampleSize + data.numSamples]{ 0 };
+		mProcessIn[1] = new Sample32[mDelaySampleSize + data.numSamples]{ 0 };
 	}
 
-	//memcpy(mProcessIn[0], mDelayIn[0], delaySampleSize * sizeof(Sample32));
-	//memcpy(mProcessIn[0] + delaySampleSize, ins0, (data.numSamples - delaySampleSize) * sizeof(Sample32));
-	//memcpy(mProcessIn[1], mDelayIn[1], delaySampleSize * sizeof(Sample32));
-	//memcpy(mProcessIn[1] + delaySampleSize, ins1, (data.numSamples - delaySampleSize) * sizeof(Sample32));
+	for (int i = 0; i < numChannels; i++) {
+		Sample32* ins = data.inputs[0].channelBuffers32[i];
+		Sample32* outs = data.outputs[0].channelBuffers32[i];
 
-	for (int i = 0; i < 2; i++)
-	{
+		// calc processIn
+		//memcpy(mProcessIn[i], mDelayIn[i], mDelaySampleSize * sizeof(Sample32));
+		//memcpy(mProcessIn[i] + mDelaySampleSize, ins, data.numSamples * sizeof(Sample32));
 
+		//processInternal(i, mProcessIn[i], mDelaySampleSize + data.numSamples, outs, data.numSamples);
+
+		//memcpy(mDelayIn[i], ins + (data.numSamples - mDelaySampleSize), mDelaySampleSize * sizeof(Sample32));
 	}
-	//memcpy(mDelayIn[0], ins0 + (data.numSamples - delaySampleSize), delaySampleSize * sizeof(Sample32));
-	//memcpy(mDelayIn[1], ins1 + (data.numSamples - delaySampleSize), delaySampleSize * sizeof(Sample32));
+
 	return kResultTrue;
+}
+
+void CompressorProcessor::processInternal(int inIndex, Sample32* processIns, int processInSize, Sample32* outs, int outSize)
+{
+	Sample32 prevIn = 0;
+	int begin = 0;
+	int processedSize = 0;
+	for (int i = 0; i < processInSize; i++) {
+		// find halfcycle and process
+		if ((prevIn < 0 && processIns[i] >= 0) 
+				|| (prevIn > 0 && processIns[i] <= 0) 
+				|| (i == processInSize - 1)) {
+			// process final sample of this frame
+			if (i == processInSize - 1) {
+				i = i + 1;
+			}
+			processHalfCycle(inIndex, processIns, begin, i, outs, outSize);
+			processedSize += (i - begin);
+			begin = i;
+			if (processedSize > outSize) {
+				break;
+			}
+		}
+		prevIn = processIns[i];
+	}
+}
+
+void CompressorProcessor::processHalfCycle(int inIndex, Sample32* processIns, int inBegin, int inEnd, Sample32* outs, int outSize)
+{
+	float trueRatio = 1;
+	if (inBegin == 0 && mTrueRatio[inIndex] != -1) {
+		trueRatio = mTrueRatio[inIndex];
+	} else {
+		// find max in half cycle
+		Sample32 max = 0;
+		Sample32 in = 0;
+		for (int i = inBegin; i < inEnd; i++) {
+			in = processIns[i] > 0 ? processIns[i] : -processIns[i];
+			max = in > max ? in : max;
+		}
+		Sample32 over = max - mThreshold;
+		if (over > 0) {
+			trueRatio = ((over / ParamUtils::get_ratio_range().toUsefulValue(mRatio)) + mThreshold) / max;
+		} else {
+			trueRatio = 1;
+		}
+	}
+	// process every sample
+	inEnd = inEnd < outSize ? inEnd : outSize;
+	for (int i = inBegin; i < inEnd; i++) {
+		outs[i] = processIns[i] * trueRatio;
+	}
+	mTrueRatio[inIndex] = trueRatio;
 }
 
 //------------------------------------------------------------------------
