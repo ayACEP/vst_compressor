@@ -55,6 +55,7 @@ tresult PLUGIN_API CompressorProcessor::terminate()
 	if (mDelayIn[1]) delete mDelayIn[1];
 	if (mProcessIn[0]) delete mProcessIn[0];
 	if (mProcessIn[1]) delete mProcessIn[1];
+
 	return AudioEffect::terminate();
 }
 
@@ -177,13 +178,11 @@ tresult PLUGIN_API CompressorProcessor::process2(ProcessData& data)
 	}
 
 	//LOG_PROCESS("%d, %d\n", data.numSamples, data.numInputs);
+	
+	// delay 15ms
+	mDelaySampleSize = (int)(data.processContext->sampleRate / 1000 * 5);
 	// alloc memory
-	if (mDelayIn[0] == nullptr)
-	{
-		// delay 15ms
-		mDelaySampleSize = (int)(data.processContext->sampleRate / 1000 * 5);
-		mDelaySampleSize = mDelaySampleSize < data.numSamples ? mDelaySampleSize : data.numSamples;
-
+	if (mDelayIn[0] == nullptr) {
 		mDelayIn[0] = new Sample32[mDelaySampleSize]{ 0 };
 		mDelayIn[1] = new Sample32[mDelaySampleSize]{ 0 };
 		mProcessIn[0] = new Sample32[mDelaySampleSize + data.numSamples]{ 0 };
@@ -195,12 +194,14 @@ tresult PLUGIN_API CompressorProcessor::process2(ProcessData& data)
 		Sample32* outs = data.outputs[0].channelBuffers32[i];
 
 		// calc processIn
-		//memcpy(mProcessIn[i], mDelayIn[i], mDelaySampleSize * sizeof(Sample32));
-		//memcpy(mProcessIn[i] + mDelaySampleSize, ins, data.numSamples * sizeof(Sample32));
+		memcpy(mProcessIn[i], mDelayIn[i], mDelaySampleSize * sizeof(Sample32));
+		memcpy(mProcessIn[i] + mDelaySampleSize, ins, data.numSamples * sizeof(Sample32));
 
 		//processInternal(i, mProcessIn[i], mDelaySampleSize + data.numSamples, outs, data.numSamples);
+		memcpy(outs, mProcessIn[i], data.numSamples * sizeof(Sample32));
+		//LOG("%d ", mDelaySampleSize);
 
-		//memcpy(mDelayIn[i], ins + (data.numSamples - mDelaySampleSize), mDelaySampleSize * sizeof(Sample32));
+		memcpy(mDelayIn[i], ins + (data.numSamples - mDelaySampleSize), mDelaySampleSize * sizeof(Sample32));
 	}
 
 	return kResultTrue;
